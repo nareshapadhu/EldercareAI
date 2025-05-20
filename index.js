@@ -149,7 +149,7 @@ venom
         },
         {
           headers: {
-            'Authorization': 'Bearer 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', // replace with your key
+            'Authorization': 'Bearer Your_API_Key', // replace with your key
             'Content-Type': 'application/json',
           }
         }
