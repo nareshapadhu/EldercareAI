@@ -1,0 +1,59 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "functionCode": "/* Get list of users with daily check-in enabled from your data source or webhook input */\n// For demo, single user example\nreturn [\n  {\n    json: {\n      phone: $json[\"phone\"],\n      userName: $json[\"userName\"]\n    }\n  }\n];"
+        },
+        "name": "Get Users for Daily Check-in",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 1,
+        "position": [300, 300]
+      },
+      {
+        "parameters": {
+          "functionCode": "const userName = $json[\"userName\"] || \"User\";\nconst msg = `Hello ${userName}, this is your daily health check-in. How are you feeling today? Remember to take your medicines on time.`;\nreturn [{ json: { phone: $json[\"phone\"], message: msg } }];"
+        },
+        "name": "Prepare Daily Check-in Message",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 1,
+        "position": [500, 300]
+      },
+      {
+        "parameters": {
+          "url": "http://localhost:5678/send",
+          "method": "POST",
+          "jsonParameters": true,
+          "bodyParametersJson": "={\"to\": $json[\"phone\"], \"message\": $json[\"message\"]}"
+        },
+        "name": "Send Daily Check-in Message",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 1,
+        "position": [700, 300]
+      }
+    ],
+    "connections": {
+      "Get Users for Daily Check-in": {
+        "main": [
+          [
+            {
+              "node": "Prepare Daily Check-in Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Daily Check-in Message": {
+        "main": [
+          [
+            {
+              "node": "Send Daily Check-in Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  }
+  

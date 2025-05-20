@@ -1,0 +1,101 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "url": "https://openrouter.ai/api/v1/chat/completions",
+          "jsonParameters": true,
+          "options": {},
+          "bodyParametersJson": "={\n  \"model\": \"mixtral\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a friendly eldercare assistant AI. Your goal is to onboard a new user by collecting the following details in a polite, clear, and structured way:\\n\\n1. User's full name.\\n2. List of medicines they take regularly — for each medicine, collect:\\n   - Medicine name\\n   - Quantity/dosage\\n   - Time(s) of day they take it (morning, afternoon, night, or specific times)\\n3. Emergency family members to notify — for each, collect:\\n   - Name\\n   - Relationship\\n   - Phone number\\n4. Whether the user wants daily health check-in messages (Yes/No).\\n\\nImportant rules:\\n\\n- NEVER diagnose any medicine or medical condition.\\n- If the user mentions any emergency symptoms or says they feel very bad, instruct them immediately to call their doctor, a family member, or dial the ambulance number 108.\\n- Confirm the information collected at the end.\\n- Keep your language clear, gentle, and supportive.\\n- Guide the user step-by-step until all info is collected.\\n\\nStart by greeting the user and asking for their full name.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$json[\\\"message\\\"]}}\"\n    }\n  ]\n}"
+        },
+        "name": "AI Chat Processing",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 1,
+        "position": [
+          800,
+          300
+        ],
+        "credentials": {
+          "httpBasicAuth": {
+            "id": "Your API Key"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "functionCode": "return [\n  {\n    json: {\n      reply: $json[\"choices\"][0][\"message\"][\"content\"]\n    }\n  }\n];"
+        },
+        "name": "Extract AI Reply",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 1,
+        "position": [
+          1000,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "functionCode": "return [{ json: { phone: $json[\"phone\"], message: $json[\"reply\"] } }];"
+        },
+        "name": "Prepare WhatsApp Message",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 1,
+        "position": [
+          1200,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "url": "http://localhost:5678/send",
+          "method": "POST",
+          "jsonParameters": true,
+          "options": {},
+          "bodyParametersJson": "={\n  \"to\": $json[\"phone\"],\n  \"message\": $json[\"message\"]\n}"
+        },
+        "name": "Send WhatsApp Message",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 1,
+        "position": [
+          1400,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "AI Chat Processing": {
+        "main": [
+          [
+            {
+              "node": "Extract AI Reply",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract AI Reply": {
+        "main": [
+          [
+            {
+              "node": "Prepare WhatsApp Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare WhatsApp Message": {
+        "main": [
+          [
+            {
+              "node": "Send WhatsApp Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  }
+  

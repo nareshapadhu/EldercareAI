@@ -1,0 +1,59 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "functionCode": "/* Extract emergency data from incoming webhook */\nreturn [\n  {\n    json: {\n      phoneNumbers: $json[\"familyPhones\"], // Array of phone numbers\n      emergencyMessage: $json[\"emergencyMessage\"],\n      userName: $json[\"userName\"]\n    }\n  }\n];"
+        },
+        "name": "Extract Emergency Data",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 1,
+        "position": [300, 300]
+      },
+      {
+        "parameters": {
+          "functionCode": "/* Create message list for family members */\nconst phones = $json[\"phoneNumbers\"] || [];\nconst msg = $json[\"emergencyMessage\"] || \"\";\nconst userName = $json[\"userName\"] || \"User\";\n\nreturn phones.map(phone => {\n  return {\n    json: {\n      phone,\n      message: `Emergency alert for ${userName}: ${msg}. Please check immediately or call ambulance 108.`\n    }\n  };\n});"
+        },
+        "name": "Create Family Alert Messages",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 1,
+        "position": [500, 300]
+      },
+      {
+        "parameters": {
+          "url": "http://localhost:5678/send",
+          "method": "POST",
+          "jsonParameters": true,
+          "bodyParametersJson": "={\"to\": $json[\"phone\"], \"message\": $json[\"message\"]}"
+        },
+        "name": "Send Alerts to Family",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 1,
+        "position": [700, 300]
+      }
+    ],
+    "connections": {
+      "Extract Emergency Data": {
+        "main": [
+          [
+            {
+              "node": "Create Family Alert Messages",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Family Alert Messages": {
+        "main": [
+          [
+            {
+              "node": "Send Alerts to Family",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  }
+  
